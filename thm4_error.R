@@ -1,10 +1,10 @@
 ################################################################
 ################################################################
-## Successive adjuvancy basic simulation of theorem 4         ##
+## Stacked interventions simulation of theorem 4              ##
 ################################################################
 ################################################################
 ## 
-## James Liley, April 27
+## James Liley, April 27 2022
 ##
 
 
@@ -14,9 +14,11 @@
 ################################################################
 
 # Random seed
-seed=1
+seed=2
 set.seed(seed)
 
+# Libraries
+library(shape)
 
 # Logit function
 logistic=function(x,a=1) 1/(1+exp(-a*x))
@@ -36,13 +38,13 @@ mxs0=1
 e_max=50
 
 # Set to TRUE to save figure to file rather than drawing in R
-save_plot=FALSE
+save_plot=TRUE
 
 # rho-eq value
 rho_eq=0.2
 
 # Also fit n_sd other equivalent rho_e functions in order to estimate expected value later
-n_sd=5
+n_sd=50
 
 
 ################################################################
@@ -55,7 +57,7 @@ beta=abs(rnorm(p)) # WOLOG assume elements of beta are positive
 f=function(x,e=0) as.numeric(logistic((x %*% beta)))
 
 ## Random valued g: g(r,x) = x - U(-mxs/2,mxs)*sign(r-r_eq)*|r-r_eq|^g_ex. Identical over epochs. 
-g=function(r,x,r_eq=rho_eq,mxs=mxs0,e=0,g_ex=0.5) {
+g=function(r,x,r_eq=rho_eq,mxs=mxs0,e=0,g_ex=1/3) {
   dx=matrix(runif(length(x),-mxs/2,mxs),nrow=nrow(x),ncol=ncol(x))
   sx=sign(r-r_eq)*abs(r-r_eq)^g_ex
   dx=dx*sx
@@ -186,8 +188,7 @@ for (i in 1:e_max) {
 ## Compute values rho_e^o(x)                                  ##
 ################################################################
 
-
-x0=t(matrix(x,length(x),n_oracle))
+x0=t(matrix(x,length(x),e_max))
 rho_e_o=rep(0,e_max+1)
 E_rho_e1=rep(0,e_max)
 
@@ -212,14 +213,16 @@ for (i in 1:e_max) {
 
 # Draw plot
 if (save_plot) pdf("./thm4demo.pdf",width=4,height=4)
-plot(0,type="n",xlim=c(0,e_max),ylim=c(0,1),xlab="e",ylab=expression(rho[e]^o))
+par(mar=c(4.1,4.1,1,1))
+
+plot(0,type="n",xlim=c(0,e_max),ylim=c(0,1),xlab="Epoch e",ylab=expression(paste("P(Y"[e],"|X"[e],"(0) = x)")))
 lines(0:e_max,rho_e_o)
 Arrows(0:(e_max-1),rho_e_o[1:e_max],1:e_max,E_rho_e1[2:(e_max+1)],
-  col="gray",arr.length=0.1)
+       col="gray",arr.length=0.1)
 abline(h=rho_eq,col="red",lty=2)
 abline(h=rho_eq+ delta/(gamma*c0),col="red")
 abline(h=rho_eq- delta/(gamma*c0),col="red")
 legend("topright",c(expression(rho[e]^o),expression(paste("Exp. ",rho[e]^o)),
-  expression(rho[eq]),expression(paste("I"[1],"/","I"[2]))),lty=c(1,1,2,1),
-  col=c("black","gray","red","red"),bty="n")
+                    expression(rho[eq]),expression(paste("I"[1],"/","I"[2]))),lty=c(1,1,2,1),
+       col=c("black","gray","red","red"),bty="n")
 if (save_plot) dev.off()

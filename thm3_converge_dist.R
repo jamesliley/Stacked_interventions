@@ -1,10 +1,10 @@
 ################################################################
 ################################################################
-## Successive adjuvancy basic simulation of theorem 3         ##
+## Stacked interventions simulation of theorem 3              ##
 ################################################################
 ################################################################
 ## 
-## James Liley, July 27
+## James Liley, April 27 2022
 ##
 
 
@@ -22,7 +22,7 @@ logistic=function(x,a=1) 1/(1+exp(-a*x))
 # Converge in distribution or not
 #  Set to FALSE to demonstrate failure of X_e(1) to converge in 
 #  distribution despite P(Y_e|X_e=x) converging 
-converge=FALSE
+converge=TRUE
 
 # Parameters
 n=1000 # number of samples
@@ -32,6 +32,9 @@ if (converge) nlimit=1000 else nlimit=1000 # g shifts each element of x by up to
 
 # Test point
 x=c(2,3,-1)
+
+# rho_eq (acceptable/equivocal risk)
+rho_eq=0.5
 
 # Function governing how to compute rho from values z=P(Y_e|X_e(0)=x) (oracle is mean of z)
 rho_fit=function(z,e) mean(f(z,e=e)) # effectively unbiased, no variance
@@ -53,10 +56,7 @@ f=function(x,e=0) as.numeric(logistic(x %*% beta))
 if (converge) 
 {
   ## In this case, g(r,x) = x + sU; s=(r-r_eq)*sign(r-r_eq),U~U(-mxs/2,mxs)
-  ##  We have E{f(g(r,x))-f(x)}/(r-r_eq) < E{f(x + (r-r_eq)*mxs)-f(x)}/(r-r_eq) < mxs*max(grad(f)) < 2-e
-  ##  Also for E{f(x)}>r_eq, we have g(E{f(x)},x)-x = (E{f(x)}-r_eq)*U, which depends on x only through f(x), so zeta=(E{f(x)}-r_eq)*U, Z=0
-  ##  Now E(zeta|rho)=E(zeta|E{f(x)}) = (rho-r_eq)*mxs/4 = O(rho-r_eq)
-  g=function(r,x,r_eq=0.2,mxs=mxs0,e=0) {
+  g=function(r,x,r_eq=rho_eq,mxs=mxs0,e=0) {
     #dx=matrix(runif(length(x),0,mxs),nrow=nrow(x),ncol=ncol(x))
     dx=matrix(runif(length(x),-mxs/2,mxs),nrow=nrow(x),ncol=ncol(x))
     sx=(r-r_eq)
@@ -64,9 +64,7 @@ if (converge)
     return(x-dx)
   }
 } else {
-  ##  In this case, however, zeta=(E{f(x)}-r_eq)^(1/4) *U
-  ##  so E(zeta|rho)=E(zeta|E{f(x)}) = (rho-r_eq)^(1/4) *mxs/4 != O(rho-r_eq)
-  g=function(r,x,r_eq=0.2,mxs=mxs0,e=0) {
+  g=function(r,x,r_eq=rho_eq,mxs=mxs0,e=0) {
     dx=matrix(runif(length(x),-mxs/2,mxs),nrow=nrow(x),ncol=ncol(x))
     sx=(r-r_eq)
     dx=dx*sign(sx)*abs(sx)^(1/4)
@@ -128,9 +126,12 @@ rho_seq=xx$rho;
 # Set up
 if (save_plot) pdf(paste0("thm3demo_conv",converge,".pdf"),width=4,height=4)
 
+par(mar=c(4.1,4.1,1,1))
+
+
 # With this g, xe converges in distribution if converge=TRUE and does not otherwise
 if (converge) {
-  xlim0=c(0,2.5)
+  xlim0=c(1,2.5)
   ylim0=c(0,14)
   ylim1=c(0.15,1)
 } else {
@@ -138,7 +139,7 @@ if (converge) {
   ylim0=c(0,1.5)
   ylim1=c(0.15,0.65)
 }
-plot(0,xlim=xlim0,ylim=ylim0,type="n",xlab=expression("First element of X"[e]),ylab="Density")
+plot(0,xlim=xlim0,ylim=ylim0,type="n",xlab=expression(paste("First element of X"[e],"(1)")),ylab="Density")
 cx=colorRampPalette(c("red","blue"))(ntrial)
 abline(v=x[1])
 for (ii in 1:ntrial) {
@@ -153,9 +154,9 @@ if (save_plot) pdf(paste0("thm3demo_conv",converge,"_rho.pdf"),width=4,height=4)
 
 #... and rho converges if converge=TRUE, and almost converges otherwise.
 plot(0,type="n",xlab="Epoch",xlim=c(0,length(rho_seq)),
-  ylab=expression(paste("P(Y"[e],"|X"[e],"(0) = x)")),
-  ylim=ylim1) # converges slowly to rho_eq
-abline(h=0.2,col="red")
+     ylab=expression(paste("P(Y"[e],"|X"[e],"(0) = x)")),
+     ylim=ylim1) # converges slowly to rho_eq
+abline(h=rho_eq,col="red")
 lines(rho_seq)
 legend("topright",legend=expression(rho[eq]),col="red",lty=1)
 

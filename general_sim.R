@@ -1,10 +1,10 @@
 ################################################################
 ################################################################
-## Successive adjuvancy basic simulation of theorem 2         ##
+## Stacked interventions, general simulation                  ##
 ################################################################
 ################################################################
 ## 
-## James Liley, April 27
+## James Liley, April 27 2022
 ##
 
 
@@ -128,7 +128,7 @@ names(midvals)=colnames(newX(1,npop=10))
 ## Set true coefficients
 med_coef_gen=rnorm(nmed,sd=0.1*mod_scale)
 coef_gen=c(nmod_scale*c(age=0.01,sex=0.5,deprivation=0.2,medhx=0.1),
-  mod_scale*c(meds=med_coef_gen,diet=0.1,smoking=0.2,alcohol=0.2))
+           mod_scale*c(meds=med_coef_gen,diet=0.1,smoking=0.2,alcohol=0.2))
 
 ## Constant
 const_gen=-(t(midvals) %*% coef_gen)[1,1]-1
@@ -202,15 +202,15 @@ subcohorts=function(X) {
 if (drawfigs) {
   if (savefigs) pdf("./rho_eq_values_by_cohort.pdf",width=4,height=4)
   plot(0,xlim=range(age_breaks),ylim=range(medhx_breaks),type="n",xlab="Age",ylab="Med. Hx.",
-    xaxs="i",yaxs="i",xaxt="n",yaxt="n")
+       xaxs="i",yaxs="i",xaxt="n",yaxt="n")
   rho_eqm=matrix(rho_eq_sub(),3,3)
   axis(1,at=age_breaks); axis(2,at=medhx_breaks)
   for (i in 1:(length(age_breaks)-1))
     for (j in 1:(length(medhx_breaks)-1)) {
       polygon(age_breaks[c(i,i+1,i+1,i)],medhx_breaks[c(j,j,j+1,j+1)],
-        col=gray(1-rho_eqm[i,j]))
+              col=gray(1-rho_eqm[i,j]))
       text((age_breaks[i]+age_breaks[i+1])/2,(medhx_breaks[j]+medhx_breaks[j+1])/2,
-        round(100*rho_eqm[i,j]))
+           round(100*rho_eqm[i,j]))
     }
   if (savefigs) dev.off()
 }
@@ -296,8 +296,8 @@ intervention=function(X,Y,rho_eq=rho_eq0,med_effect=sign(med_coef_gen),int_r=int
   # do not give specific advice (diet will probabilistically worsen slightly)
   dm=X$diet-(3*gamma*delta); ds=abs(int_r*delta)
   newdiet=runif(N,
-    dm - ds,   # Probably change X in the 'right' direction: 
-    dm + ds    # Possibly change X in the wrong direction
+                dm - ds,   # Probably change X in the 'right' direction: 
+                dm + ds    # Possibly change X in the wrong direction
   )
   newdiet=pmax(pmin(newdiet,10),0)
   
@@ -305,8 +305,8 @@ intervention=function(X,Y,rho_eq=rho_eq0,med_effect=sign(med_coef_gen),int_r=int
   # do not give specific advice (alcohol will probabilistically worsen slightly)
   am=X$alcohol-(3*gamma*delta); as = abs(int_r*delta)
   newalcohol= runif(N,
-    am - as,  # Probably change X in the 'right' direction: 
-    am + as   # Possibly change X in the wrong direction
+                    am - as,  # Probably change X in the 'right' direction: 
+                    am + as   # Possibly change X in the wrong direction
   )
   newalcohol=pmax(pmin(newdiet,10),0)
   
@@ -346,12 +346,12 @@ intervention=function(X,Y,rho_eq=rho_eq0,med_effect=sign(med_coef_gen),int_r=int
 if (drawfigs) {
   if (savefigs) pdf("./intervention1.pdf",width=4,height=4)
   plot(0,type="n",xlim=c(-1,1),ylim=c(0,10),
-    xlab=expression(paste(rho," - ",rho[eq])),ylab="Diet/alcohol",yaxt="n") 
+       xlab=expression(paste(rho," - ",rho[eq])),ylab="Diet/alcohol",yaxt="n") 
   orig=3; xr0=-1; xr1=1; yr0=0; yr1=10
   axis(2,at=c(0,2,3,4,6,8,10),label=c("0","2","Orig.","4","6","8","10"),las=2)
   g1=-(3*gamma - int_r0); g2=-(3*gamma + int_r0)
   polygon(c(-1,1,1,-orig/g2,-1,-1),c(orig - g1,orig + g1,0,0,orig - g2,orig-g1),
-    col="gray",border=NA)
+          col="gray",border=NA)
   abline(orig,g1,col="red");   abline(orig,g2,col="red")
   abline(v=0,lty=2); abline(h=yr0,lty=2); abline(h=yr1,lty=2)
   abline(h=orig,lwd=1)
@@ -361,7 +361,7 @@ if (drawfigs) {
   
   if (savefigs) pdf("./intervention2.pdf",width=4,height=4)
   plot(0,type="n",xlim=c(-1,1),ylim=c(0,1),
-    xlab=expression(paste(rho," - ",rho[eq])),ylab="P(smoking)/P(drug)") 
+       xlab=expression(paste(rho," - ",rho[eq])),ylab="P(smoking)/P(drug)") 
   xr0=-1; xr1=1; yr0=0; yr1=1; xp=seq(0,1,length=200); xn=-xp
   gp=2*logistic(4*gamma*xp)-1;   gn=2*logistic(4*gamma*xn)-1
   abline(v=0,lty=2); abline(h=yr0,lty=2); abline(h=yr1,lty=2)
@@ -387,7 +387,7 @@ plotscores=function(X,legend=FALSE) {
   sval=levels(strat)
   rho_eq0=rho_eq_sub()
   plot(0,xlim=c(0,length(sval)),ylim=c(-0.5,1.1),type="n",xaxt="n",yaxt="n",
-    ylab="Risk",xlab="",bty="n")
+       ylab="Risk",xlab="",bty="n")
   dsc=0.05; rl=0.7
   for (i in 1:length(sval)) {
     w=which(strat==sval[i])
@@ -395,7 +395,7 @@ plotscores=function(X,legend=FALSE) {
     dx=density(target_prob[w])
     points(xx-1,target_prob[w],pch=".",col="gray")
     polygon(i + rl/2 + dsc*c(dx$y,-rev(dx$y))-1,c(dx$x,rev(dx$x)),
-      col=rgb(0,0,1,alpha=0.5),border=NA)
+            col=rgb(0,0,1,alpha=0.5),border=NA)
     lines(c(i,i+rl)-1,rep(rho_eq0[sval[i]],2),col="red",lwd=2)
     points(i + rl/2-1,mean(target_prob[w]),pch=16,cex=0.6)
   }
@@ -419,7 +419,7 @@ plotscores=function(X,legend=FALSE) {
   
   if (legend) 
     legend("topleft",bty="n",c("Scores","Mean","Distribution",expression(rho[eq])),
-      col=c("gray","black",rgb(0,0,1,alpha=0.5),"red"),pch=c(16,16,16,NA),lty=c(NA,NA,NA,1))
+           col=c("gray","black",rgb(0,0,1,alpha=0.5),"red"),pch=c(16,16,16,NA),lty=c(NA,NA,NA,1))
 }
 
 
